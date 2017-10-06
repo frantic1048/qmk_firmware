@@ -5,7 +5,6 @@
 // Helpers
 #define ____ KC_NO
 #define ___T KC_TRNS
-#define GUI_MODS (MOD_BIT(KC_LGUI)|MOD_BIT(KC_RGUI))
 
 enum keyboard_layers {
     _L0,
@@ -116,30 +115,26 @@ const uint16_t PROGMEM fn_actions[] = {
 };
 
 void action_function(keyrecord_t *record, uint8_t id, uint8_t opt) {
-    static uint8_t is_gui_pressed;
-
+    #define GUI_MODS (MOD_BIT(KC_LGUI)|MOD_BIT(KC_RGUI))
+    static uint8_t registered_caps;
     switch (id) {
         case _BSPC:
             // tricky BSPC c⌒っ.ω.)っ
-            is_gui_pressed = get_mods() & GUI_MODS;
             if (record->event.pressed) {
                 // key is being pressed
-                if (is_gui_pressed) {
-                    add_key(KC_ESC);
-                    send_keyboard_report();
+                if (get_mods() & GUI_MODS) {
+                    // GUI + Caps -> Esc
+                    registered_caps = KC_ESC;
                 } else {
-                    add_key(KC_BSPC);
-                    send_keyboard_report();
+                    // Caps -> Backspace
+                    registered_caps = KC_BSPC;
                 }
+                register_code(registered_caps);
+                send_keyboard_report();
             } else {
                 // key is being released
-                if (is_gui_pressed) {
-                    del_key(KC_ESC);
-                    send_keyboard_report();
-                } else {
-                    del_key(KC_BSPC);
-                    send_keyboard_report();
-                }
+                unregister_code(registered_caps);
+                send_keyboard_report();
             }
         break;
     }
