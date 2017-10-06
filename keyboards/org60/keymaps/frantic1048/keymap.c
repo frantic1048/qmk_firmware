@@ -117,6 +117,7 @@ const uint16_t PROGMEM fn_actions[] = {
 void action_function(keyrecord_t *record, uint8_t id, uint8_t opt) {
     #define GUI_MODS MOD_BIT(KC_LGUI)
     static uint8_t registered_caps;
+    static bool early_rsleeased_gui;
     switch (id) {
         case _BSPC:
             // tricky BSPC c⌒っ.ω.)っ
@@ -133,23 +134,33 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt) {
                     // which could be troublesome.
                     //
                     // with early release, triggers event:
-                    //     Press GUI, Release GUI, Press ESC, Release ESC
+                    //     Press GUI, Release GUI, Press ESC, Release ESC, Press GUI, Release GUI
                     // which is fine
                     unregister_code(KC_LGUI);
                     send_keyboard_report();
+                    early_rsleeased_gui = true;
 
                     // GUI + Caps -> Esc
                     registered_caps = KC_ESC;
                 } else {
                     // Caps -> Backspace
                     registered_caps = KC_BSPC;
+                    early_rsleeased_gui = false;
                 }
                 register_code(registered_caps);
                 send_keyboard_report();
             } else {
                 // key is being released
+                // release corresponding key triggered before
                 unregister_code(registered_caps);
                 send_keyboard_report();
+
+                // for consistency
+                // keep the GUI key being pressed
+                if (early_rsleeased_gui) {
+                    register_code(KC_LGUI);
+                    send_keyboard_report();
+                }
             }
         break;
     }
