@@ -115,7 +115,7 @@ const uint16_t PROGMEM fn_actions[] = {
 };
 
 void action_function(keyrecord_t *record, uint8_t id, uint8_t opt) {
-    #define GUI_MODS (MOD_BIT(KC_LGUI)|MOD_BIT(KC_RGUI))
+    #define GUI_MODS MOD_BIT(KC_LGUI)
     static uint8_t registered_caps;
     switch (id) {
         case _BSPC:
@@ -123,6 +123,21 @@ void action_function(keyrecord_t *record, uint8_t id, uint8_t opt) {
             if (record->event.pressed) {
                 // key is being pressed
                 if (get_mods() & GUI_MODS) {
+                    // early release KC_GUI
+                    // notice this action sequence:
+                    //     Press GUI, Press F(_BSPC), Release F(_BSPC), Release GUI
+                    //
+                    // without early releasing, triggers event:
+                    //     Press GUI, Press ESC, Release ESC, Release GUI
+                    // thus applications will get GUI+ESC, not bare ESC,
+                    // which could be troublesome.
+                    //
+                    // with early release, triggers event:
+                    //     Press GUI, Release GUI, Press ESC, Release ESC
+                    // which is fine
+                    unregister_code(KC_LGUI);
+                    send_keyboard_report();
+
                     // GUI + Caps -> Esc
                     registered_caps = KC_ESC;
                 } else {
