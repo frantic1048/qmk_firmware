@@ -21,7 +21,7 @@ http://www.keyboard-layout-editor.com/#/gists/11e758a3704a06639e3e10cbf57e7777
 ### Layer2 - other keys
 http://www.keyboard-layout-editor.com/#/gists/0ca41635d5cea056c770540733013aa8
 
-![layer2](https://imgur.com/m0fGWS9.png)
+![layer2](https://imgur.com/uNa9XNM.png)
 
 ### Layer3 - layer control
 http://www.keyboard-layout-editor.com/#/gists/88f938ed5626072761284364e5bae4de
