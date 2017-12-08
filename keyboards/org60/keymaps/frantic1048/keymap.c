@@ -16,6 +16,8 @@ enum keyboard_actions {
     _BSPC,
 };
 
+static bool esc_bspc_was_shifted = false;
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_L0] = KEYMAP(
       //--------------------------------------------------------------------------------------------------------------------------------------.
@@ -116,56 +118,24 @@ const uint16_t PROGMEM fn_actions[] = {
 
 void action_function(keyrecord_t *record, uint8_t id, uint8_t opt) {
     #define GUI_MODS MOD_BIT(KC_LGUI)
-    static uint8_t registered_caps;
-    static bool early_rsleeased_gui;
     switch (id) {
-        case _BSPC:
+        case _BSPC: {
             // tricky BSPC c⌒っ.ω.)っ
+            // referenced implementation of qmk GRAVE_ESC
+            // https://github.com/qmk/qmk_firmware/blob/master/quantum/quantum.c#L552-L595
             if (record->event.pressed) {
-                // key is being pressed
-                if (get_mods() & GUI_MODS) {
-                    // early release KC_GUI
-                    // notice this action sequence:
-                    //     Press GUI, Press F(_BSPC), Release F(_BSPC), Release GUI
-                    //
-                    // without early releasing, triggers event:
-                    //     Press GUI, Press ESC, Release ESC, Release GUI
-                    // thus applications will get GUI+ESC, not bare ESC,
-                    // which could be troublesome.
-                    //
-                    // with early release, triggers event:
-                    //     Press GUI, Release GUI, Press ESC, Release ESC, Press GUI, Release GUI
-                    // which is fine
-                    unregister_code(KC_LGUI);
-                    send_keyboard_report();
-                    early_rsleeased_gui = true;
-
-                    // GUI + Caps -> Esc
-                    registered_caps = KC_ESC;
-                } else {
-                    // Caps -> Backspace
-                    registered_caps = KC_BSPC;
-                    early_rsleeased_gui = false;
-                }
-                register_code(registered_caps);
-                send_keyboard_report();
+                uint8_t shifted = get_mods() & GUI_MODS;
+                esc_bspc_was_shifted = shifted;
+                add_key(shifted ? KC_ESCAPE : KC_BSPC);
             } else {
-                // key is being released
-                // release corresponding key triggered before
-                unregister_code(registered_caps);
-                send_keyboard_report();
-
-                // for consistency
-                // keep the GUI key being pressed
-                if (early_rsleeased_gui) {
-                    register_code(KC_LGUI);
-                    send_keyboard_report();
-                }
+                del_key(esc_bspc_was_shifted ? KC_ESCAPE : KC_BSPC);
             }
-        break;
-    }
-}
 
-#undef GUI_MODS
+            send_keyboard_report();
+            break;
+        }
+    }
+    #undef GUI_MODS
+}
 #undef ___T
 #undef ____
